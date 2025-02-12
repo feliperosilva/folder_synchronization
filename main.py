@@ -2,9 +2,10 @@ import argparse, os, shutil
 import time
 from datetime import datetime
 
+# Parses command-line arguments
 def parse_args():
 
-    parser = argparse.ArgumentParser(description='Syncronize source and replica folders')
+    parser = argparse.ArgumentParser(description='Synchronize source and replica folders')
 
     parser.add_argument('source', help='Path to source folder')
     parser.add_argument('replica', help='Path to replica folder')
@@ -13,9 +14,10 @@ def parse_args():
 
     return parser.parse_args()
 
+# Lists all files in a folder
 def list_files(folder):
 
-    # Create unique set of filenames
+    # Create unique set of filenames (avoid duplicates)
     unique_files = set()
 
     for dirpath, _, filenames in os.walk(folder):
@@ -25,12 +27,12 @@ def list_files(folder):
     
     return unique_files
 
-
+# Updates replica folder to maintain an exact copy of the source folder
 def update_replica(source_folder, replica_folder):
 
     # Check for source folder
     if not os.path.exists(source_folder):
-        raise Exception(f'The folder {source_folder} does not exist.')
+        raise Exception(f'The folder {source_folder} does not exist.') #raise eror if it does not exist
     elif not os.path.exists(replica_folder):
         os.mkdir(replica_folder)
         
@@ -39,11 +41,13 @@ def update_replica(source_folder, replica_folder):
 
     # Check if there are files in source folder that is not in the replica folder
     files_to_copy = source_folder_files - replica_folder_files
+    # Check if there are files in replica folder that is not in the source folder
     files_to_delete = replica_folder_files - source_folder_files
     
     files_added = []
     files_removed = []
 
+    # Add files from source folder that do not exist in replica folder
     for file_path in files_to_copy:
         src_path = os.path.join(source_folder, file_path)
         dest_path = os.path.join(replica_folder, file_path)
@@ -51,12 +55,14 @@ def update_replica(source_folder, replica_folder):
         shutil.copy(src_path, dest_path)
         files_added.append(file_path)
     
+    # Deleting files from replica folder that do not exist in source folder
     for file_path in files_to_delete:
         os.remove(os.path.join(replica_folder, file_path))
         files_removed.append(os.path.basename(file_path))
 
     return files_added, files_removed
 
+# Create logs in logs/sync.log of each file added or removed to replica folder
 def log_changes(files_added, files_removed, log_file='logs/sync.log'):
 
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -70,10 +76,10 @@ def log_changes(files_added, files_removed, log_file='logs/sync.log'):
     # Log the changes when they happen
     if files_added or files_removed:
         with open(log_file, 'a') as f:
-            f.write(log_entry)
-
+            f.write(log_entry)        
         print(log_entry)
 
+# Sycronization initializer
 def start_sync(source, replica, sync_interval):
     try:
         while True:
