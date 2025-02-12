@@ -1,4 +1,6 @@
 import argparse, os, shutil
+import time
+from datetime import datetime
 
 def parse_args():
 
@@ -47,12 +49,36 @@ def update_replica(source_folder, replica_folder):
         dest_path = os.path.join(replica_folder, file_path)
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)  # Ensure directories exist
         shutil.copy(src_path, dest_path)
+        files_added.append(file_path)
     
     for file_path in files_to_delete:
-        os.remove(file_path)
+        os.remove(os.path.join(replica_folder, file_path))
         files_removed.append(os.path.basename(file_path))
 
-    return {
-        'added_files': files_added,
-        'removed_files': files_removed
-    }
+    return files_added, files_removed
+
+def log_changes(files_added, files_removed, log_file='logs/sync.log'):
+
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    log_entry = f'[{timestamp}] Changes:\n'
+
+    if files_added:
+        log_entry += f'Files added: {", ".join(files_added)}\n'
+    if files_removed:
+        log_entry += f'Files removed: {", ".join(files_removed)}\n'
+
+    # Log the changes when they happen
+    if files_added or files_removed:
+        with open(log_file, 'a') as f:
+            f.write(log_entry)
+
+        print(log_entry)
+
+def start_sync(source, replica, sync_interval):
+    try:
+        while True:
+            files_added, files_removed = update_replica(source, replica)
+            log_changes(files_added, files_removed)
+            time.sleep(sync_interval)
+    except KeyboardInterrupt:
+        print('Sync terminated.')
