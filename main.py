@@ -82,3 +82,10 @@ def start_sync(source, replica, sync_interval):
             time.sleep(sync_interval)
     except KeyboardInterrupt:
         print('Sync terminated.')
+
+if __name__ == '__main__':
+    # Parse arguments to command line
+    args = parse_args()
+
+    # Start the synchronization
+    start_sync(args.source, args.replica, args.sync_interval)
