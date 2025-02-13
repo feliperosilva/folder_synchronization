@@ -1,7 +1,7 @@
 # Folder Synchronization Script
 
-This script synchronizes a **source folder** with a **replica folder**.`  `
-The goal is to maintain an exact copy of **source folder** inside the **replica folder**.`  `
+This script synchronizes a **source folder** with a **replica folder**.  
+The goal is to maintain an exact copy of **source folder** inside the **replica folder**.  
 It is designed to run periodically at a time interval defined by the user.
 
 ## Features
