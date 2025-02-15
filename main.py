@@ -43,16 +43,17 @@ def update_replica(source_folder, replica_folder):
     files_to_copy = source_folder_files - replica_folder_files
     # Check if there are files in replica folder that is not in the source folder
     files_to_delete = replica_folder_files - source_folder_files
-    
+
     files_added = []
     files_removed = []
+    files_updated = []
 
     # Add files from source folder that do not exist in replica folder
     for file_path in files_to_copy:
         src_path = os.path.join(source_folder, file_path)
         dest_path = os.path.join(replica_folder, file_path)
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)  # Ensure directories exist
-        shutil.copy(src_path, dest_path)
+        shutil.copy2(src_path, dest_path) # Copy and preserve timestamps
         files_added.append(file_path)
     
     # Deleting files from replica folder that do not exist in source folder
@@ -60,10 +61,21 @@ def update_replica(source_folder, replica_folder):
         os.remove(os.path.join(replica_folder, file_path))
         files_removed.append(os.path.basename(file_path))
 
-    return files_added, files_removed
+    # Check if there was any change in a file in source folder that already exists in replica folder using timestamps
+    # If there was a change, update the file in replica folder
+    for file_path in source_folder_files:
+        src_path = os.path.join(source_folder, file_path)
+        dest_path = os.path.join(replica_folder, file_path)
+        if os.path.exists(src_path) and os.path.exists(dest_path):
+            if os.path.getmtime(src_path) > os.path.getmtime(dest_path):
+                shutil.copy2(src_path, dest_path)
+                files_updated.append(file_path)
+
+
+    return files_added, files_removed, files_updated
 
 # Create logs in logs/sync.log of each file added or removed to replica folder
-def log_changes(files_added, files_removed, log_file='logs/sync.log'):
+def log_changes(files_added, files_removed, files_updated, log_file='logs/sync.log'):
 
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_entry = f'[{timestamp}] Changes:\n'
@@ -72,9 +84,11 @@ def log_changes(files_added, files_removed, log_file='logs/sync.log'):
         log_entry += f'Files added: {", ".join(files_added)}\n'
     if files_removed:
         log_entry += f'Files removed: {", ".join(files_removed)}\n'
+    if files_updated:
+        log_entry += f'Files updated: {", ".join(files_updated)}\n'
 
     # Log the changes when they happen
-    if files_added or files_removed:
+    if files_added or files_removed or files_updated:
         with open(log_file, 'a') as f:
             f.write(log_entry)        
         print(log_entry)
@@ -83,8 +97,8 @@ def log_changes(files_added, files_removed, log_file='logs/sync.log'):
 def start_sync(source, replica, sync_interval):
     try:
         while True:
-            files_added, files_removed = update_replica(source, replica)
-            log_changes(files_added, files_removed)
+            files_added, files_removed, files_updated = update_replica(source, replica)
+            log_changes(files_added, files_removed, files_updated)
             time.sleep(sync_interval)
     except KeyboardInterrupt:
         print('Sync terminated.')
