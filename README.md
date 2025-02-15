@@ -10,6 +10,7 @@ It is designed to run periodically at a time interval defined by the user.
 * Creates a replica folder if it does not exist.
 * Adds files that are in the source folder to the replica folder.
 * Removes files from the replica folder that do not exist in the source folder.
+* Updates files that exist in both source and replica folders and that are modified in source folder.
 * Logs all changes to a log file.
 
 ## Requirements
